@@ -139,6 +139,17 @@
   .play:active { transform: scale(.94); }
   .play svg { width: 44px; height: 44px; fill: var(--blush); }
 
+  /* Sound */
+  .sound-row { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--blush-2); }
+  .seg button { padding: 7px 13px; border-radius: 999px; font-size: 14px; transition: background .15s, color .15s; }
+  .seg button[aria-checked="true"] { background: var(--wine); color: var(--blush); }
+  .sound-msg { margin: 0; font-size: 13px; color: var(--wine-soft); text-align: center; min-height: 0; }
+  .sound-msg:empty { display: none; }
+  .spotify-wrap { width: 100%; max-height: 0; overflow: hidden; transition: max-height .35s ease; border-radius: 12px; }
+  .spotify-wrap.show { max-height: 90px; }
+  .spotify-wrap iframe { display: block; border: 0; border-radius: 12px; }
+
   /* Tracklist */
   .queue { padding: 28px 28px 18px; }
   .queue h2 {
@@ -266,6 +277,16 @@
       <svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="24" cy="24" r="21"/><path d="M16 18.5l7 5.5-7 5.5zM25 18.5l7 5.5-7 5.5z"/></svg>
     </button>
   </div>
+
+  <div class="sound-row">
+    <div class="seg" role="radiogroup" aria-label="Sound">
+      <button role="radio" data-mode="songs">♪ Theme songs</button>
+      <button role="radio" data-mode="lofi">☕ Lofi</button>
+      <button role="radio" data-mode="off">Off</button>
+    </div>
+    <p class="sound-msg" id="soundMsg" aria-live="polite"></p>
+    <div class="spotify-wrap" id="spotifyWrap"><div id="spotifyEmbed"></div></div>
+  </div>
 </main>
 
 <section class="card queue player-list" aria-label="Full itinerary">
@@ -296,7 +317,9 @@
   const $ = id => document.getElementById(id);
   const tracks = ITINERARY.flatMap(d => d.events.map(e => ({ ...e, day: d.day, dayDate: d.date })));
   const N = tracks.length;
-  const DUR = (TRIP.secondsPerTrack || 6) * 1000;
+  const trackMs = () => (TRIP.secondsPerTrack || 8) * 1000;
+  const songMs = () => (TRIP.secondsPerSong || 30) * 1000;
+  const dur = () => usingSpotify() ? songMs() : trackMs();
   const PLAY = '<path d="M7 4.5v15l12.5-7.5z"/>';
   const PAUSE = '<path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z"/>';
 
@@ -358,7 +381,7 @@
     $("arch").classList.toggle("spin", playing);
     document.body.classList.toggle("playing", playing);
     // Progress across the whole weekend; on the cover sit just past the start like the mockup
-    const p = idx < 0 ? 0.25 / N : Math.min(1, (idx + Math.min(t, DUR) / DUR) / N);
+    const p = idx < 0 ? 0.25 / N : Math.min(1, (idx + Math.min(t, dur()) / dur()) / N);
     $("fill").style.width = p * 100 + "%";
     $("knob").style.left = p * 100 + "%";
     $("bar").setAttribute("aria-valuetext", idx < 0 ? "Start" : `${tracks[idx].day} ${tracks[idx].time}`);
@@ -368,6 +391,7 @@
     idx = Math.max(-1, Math.min(N - 1, i));
     t = 0; ended = false;
     render();
+    syncAudio();
   }
 
   function setPlaying(on) {
@@ -377,24 +401,232 @@
       last = performance.now();
       requestAnimationFrame(tick);
     }
+    syncAudio();
     updateUI();
   }
 
   function tick(now) {
     if (!playing) return;
     t += now - last; last = now;
-    if (t >= DUR) {
+    if (t >= dur()) {
       if (idx < N - 1) go(idx + 1);
-      else { t = DUR; playing = false; ended = true; updateUI(); return; }
+      else { t = dur(); playing = false; ended = true; syncAudio(); updateUI(); return; }
     }
     updateUI();
     requestAnimationFrame(tick);
   }
 
+  // ---------- Sound: Spotify theme songs, with generated lofi as the fallback ----------
+  let soundMode = "songs";
+  try { soundMode = localStorage.getItem("kathy-sound") || "songs"; } catch {}
+  let sp = null, spFailed = false;
+  let spLoaded = null;   // song currently loaded in the Spotify player
+  let spWant = null;     // song we've asked to play (null while paused) — each request is sent once
+  let spAwait = null;    // song we've loaded and are waiting on before pressing play
+  let spStarted = null;  // song that has actually played, so un-pausing resumes instead of restarting
+  let spLiveUri = null;  // song Spotify says is playing right now
+  let spT1 = 0, spCheck = 0;
+  const hasSongs = tracks.some(x => x.spotify);
+  const uriOf = tr => "spotify:track:" + tr.spotify;
+  const spLive = () => !!sp && !!spWant && spLiveUri === spWant;
+  const usingSpotify = () => soundMode === "songs" && sp && !spFailed && idx >= 0 && !!tracks[idx].spotify;
+  const msg = m => { $("soundMsg").textContent = m || ""; };
+
+  if (hasSongs) {
+    window.onSpotifyIframeApiReady = API => {
+      const first = tracks.find(x => x.spotify);
+      API.createController($("spotifyEmbed"), { uri: uriOf(first), width: "100%", height: 80 }, ctrl => {
+        sp = ctrl; spLoaded = uriOf(first);
+        ctrl.addListener("playback_update", e => {
+          const d = e.data, uri = d.playingURI || spLoaded, wasLive = spLive();
+          spLiveUri = d.isPaused ? null : uri;
+          if (spLiveUri) spStarted = spLiveUri;
+          // The new song has loaded. Spotify often keeps playing on its own after a switch;
+          // only press play if it's sitting stopped, so we never restart a song that's going.
+          if (spAwait && uri === spAwait) {
+            if (!d.isPaused) { spAwait = null; clearTimeout(spT1); }
+            else if (!d.isBuffering) { spAwait = null; clearTimeout(spT1); if (spWant === uri) sp.play(); }
+          }
+          if (spLive() && !wasLive) {
+            spFailed = false; clearTimeout(spCheck); msg("");
+            syncAudio();
+          }
+          // Tapping play inside the Spotify player starts the slideshow too
+          if (spLiveUri && !playing && idx >= 0 && uri === uriOf(tracks[idx] || {})) {
+            playing = true; last = performance.now(); requestAnimationFrame(tick);
+            spWant = uri; syncAudio(); updateUI();
+          }
+        });
+        syncAudio();
+      });
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://open.spotify.com/embed/iframe-api/v1";
+    tag.async = true;
+    tag.onerror = () => { if (soundMode === "songs") msg("Theme songs couldn't load here, so enjoy the lofi ☕"); };
+    document.head.appendChild(tag);
+  }
+
+  function startSong(uri) {
+    spWant = uri;
+    clearTimeout(spT1); clearTimeout(spCheck);
+    if (uri !== spLoaded) {
+      spLoaded = uri; spAwait = uri; spLiveUri = null;
+      sp.loadUri(uri);
+      // If Spotify never reports the load, press play once anyway
+      spT1 = setTimeout(() => { if (spAwait === uri) { spAwait = null; if (spWant === uri && !spLiveUri) sp.play(); } }, 2000);
+    } else if (spStarted === uri) sp.resume();
+    else sp.play();
+    // Some phones block Spotify from starting on its own; play lofi for this stop if it never starts
+    spCheck = setTimeout(() => {
+      if (spWant === uri && !spLiveUri) {
+        spFailed = true; syncAudio();
+        msg("Tap ▶ in the Spotify player to hear the theme songs. Lofi until then ☕");
+      }
+    }, 8000);
+  }
+
+  let lastIdx = null;
+  function syncAudio() {
+    const tr = idx >= 0 ? tracks[idx] : null;
+    if (idx !== lastIdx) { lastIdx = idx; spFailed = false; }   // every new stop gets a fresh try at its song
+    const wantSongs = playing && soundMode === "songs" && tr && tr.spotify && sp && !spFailed;
+    const wantLofi = playing && (soundMode === "lofi" || (soundMode === "songs" && !wantSongs && !spLiveUri));
+    wantLofi ? lofi.play() : lofi.pause();
+    if (sp) {
+      if (wantSongs) {
+        if (spWant !== uriOf(tr)) startSong(uriOf(tr));
+      } else if (spWant || spLiveUri) {
+        spWant = null; spAwait = null;
+        clearTimeout(spT1); clearTimeout(spCheck);
+        sp.pause();
+      }
+    }
+    $("spotifyWrap").classList.toggle("show", soundMode === "songs" && !!sp && idx >= 0);
+  }
+
+  function setMode(m) {
+    soundMode = m;
+    try { localStorage.setItem("kathy-sound", m); } catch {}
+    document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-checked", b.dataset.mode === m));
+    spFailed = false; msg("");
+    syncAudio(); updateUI();
+  }
+  document.querySelectorAll(".seg button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  if (!hasSongs && soundMode === "songs") soundMode = "lofi";
+  if (!hasSongs) document.querySelector('.seg [data-mode="songs"]').remove();
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-checked", b.dataset.mode === soundMode));
+
+  // A little lofi band in the browser: Rhodes-ish chords, bass, a swung beat, and vinyl crackle
+  const lofi = (() => {
+    let ctx, master, keysBus, drumBus, crackle, noise, timer, next = 0, step = 0, bar = 0, running = false, sleepT = 0;
+    const BPM = 74, S16 = 60 / BPM / 4;
+    const CHORDS = [ // [bass, ...voicing] as MIDI notes: Dm9, G13, Cmaj9, Am9
+      [38, 53, 57, 60, 64], [43, 53, 59, 64, 69], [36, 52, 55, 59, 62], [45, 55, 60, 64, 71],
+    ];
+    const MEL = [72, 74, 76, 79, 81, 84];
+    const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+
+    function init() {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
+      const comp = ctx.createDynamicsCompressor();
+      master = ctx.createGain(); master.gain.value = 0;
+      const tone = ctx.createBiquadFilter(); tone.type = "lowpass"; tone.frequency.value = 2600;
+      master.connect(tone).connect(comp).connect(ctx.destination);
+      keysBus = ctx.createGain(); keysBus.gain.value = .55;
+      const wob = ctx.createOscillator(), wobAmt = ctx.createGain();
+      wob.frequency.value = 4.2; wobAmt.gain.value = .08; wob.connect(wobAmt).connect(keysBus.gain); wob.start();
+      keysBus.connect(master);
+      drumBus = ctx.createGain(); drumBus.gain.value = .9; drumBus.connect(master);
+      noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const nd = noise.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      // Vinyl: soft hiss + random pops, looped
+      const vb = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate), vd = vb.getChannelData(0);
+      for (let i = 0; i < vd.length; i++) vd[i] = (Math.random() * 2 - 1) * .012 + (Math.random() < .0004 ? (Math.random() - .5) * .9 : 0);
+      crackle = ctx.createBufferSource(); crackle.buffer = vb; crackle.loop = true;
+      const cg = ctx.createGain(); cg.gain.value = .5; crackle.connect(cg).connect(master); crackle.start();
+    }
+    function key(m, at, len, vel) {
+      const f = hz(m), g = ctx.createGain();
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(.12 * vel, at + .012);
+      g.gain.exponentialRampToValueAtTime(.04 * vel, at + .35);
+      g.gain.exponentialRampToValueAtTime(.0001, at + len);
+      g.connect(keysBus);
+      for (const [mul, amp, type, det] of [[1, 1, "sine", -4], [1, .8, "sine", 4], [2, .18, "triangle", 0], [3, .05, "sine", 0]]) {
+        const o = ctx.createOscillator(), og = ctx.createGain();
+        o.type = type; o.frequency.value = f * mul; o.detune.value = det; og.gain.value = amp;
+        o.connect(og).connect(g); o.start(at); o.stop(at + len + .05);
+      }
+    }
+    function bass(m, at, len) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = hz(m);
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.32, at + .02); g.gain.exponentialRampToValueAtTime(.0001, at + len);
+      o.connect(g).connect(master); o.start(at); o.stop(at + len + .05);
+    }
+    function kick(at) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(130, at); o.frequency.exponentialRampToValueAtTime(42, at + .14);
+      g.gain.setValueAtTime(.85, at); g.gain.exponentialRampToValueAtTime(.0001, at + .4);
+      o.connect(g).connect(drumBus); o.start(at); o.stop(at + .45);
+    }
+    function hit(at, type, freq, q, vol, len) {
+      const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      n.buffer = noise; f.type = type; f.frequency.value = freq; f.Q.value = q;
+      g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(.0001, at + len);
+      n.connect(f).connect(g).connect(drumBus); n.start(at, Math.random() * .5); n.stop(at + len + .02);
+    }
+    function schedule(s, at) {
+      const ch = CHORDS[bar % CHORDS.length];
+      if (s % 4 === 2) at += S16 * .3; // swing the off-beats
+      if (s === 0) {
+        ch.slice(1).forEach((m, i) => key(m, at + i * .018, S16 * 15, .9));
+        bass(ch[0], at, S16 * 7);
+      }
+      if (s === 10) { bass(ch[0] + (bar % 2 ? 7 : 0), at, S16 * 5); if (Math.random() < .5) ch.slice(2).forEach((m, i) => key(m, at + i * .015, S16 * 5, .45)); }
+      if (s === 0 || s === 10 || (s === 7 && Math.random() < .35)) kick(at);
+      if (s === 4 || s === 12) { hit(at, "bandpass", 1700, .7, .28, .2); hit(at, "lowpass", 400, .5, .12, .12); }
+      if (s % 2 === 0) hit(at, "highpass", 7500, .5, s % 4 === 0 ? .07 : .04, .05);
+      if (bar % 4 > 0 && s % 2 === 0 && Math.random() < .16) key(MEL[Math.floor(Math.random() * MEL.length)], at, S16 * 5, .5);
+    }
+    function loop() {
+      while (next < ctx.currentTime + .15) {
+        schedule(step, next);
+        next += S16;
+        if (++step === 16) { step = 0; bar++; }
+      }
+    }
+    return {
+      play() {
+        if (running) return;
+        if (!ctx) init();
+        clearTimeout(sleepT);
+        ctx.resume();
+        running = true;
+        next = ctx.currentTime + .08; step = 0;
+        master.gain.cancelScheduledValues(ctx.currentTime);
+        master.gain.setTargetAtTime(.75, ctx.currentTime, .25);
+        timer = setInterval(loop, 25);
+      },
+      pause() {
+        if (!running) return;
+        running = false;
+        clearInterval(timer);
+        master.gain.setTargetAtTime(0, ctx.currentTime, .15);
+        sleepT = setTimeout(() => { if (!running) ctx.suspend(); }, 900);
+      },
+    };
+  })();
+
   const dayStart = d => tracks.findIndex(x => x.day === d);
   const days = ITINERARY.map(d => d.day);
 
   $("play").onclick = () => setPlaying(!playing);
+  // Skip buttons work like a music player: skipping starts playback
+  const autoplay = () => { if (!playing && idx >= 0) setPlaying(true); };
+  ["next", "prev", "nextDay", "prevDay"].forEach(id => $(id).addEventListener("click", () => setTimeout(autoplay)));
   $("next").onclick = () => go(idx + 1);
   $("prev").onclick = () => go(idx - 1);
   $("nextDay").onclick = () => {
