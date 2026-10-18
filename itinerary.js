@@ -89,7 +89,7 @@ const STYLE = {
 const LOOKS = [
   {
     id: "fri",
-    moment: "Friday welcome dinner",
+    moment: "Friday Welcome Dinner",
     theme: "Black + wine",
     palette: [["Black", "#1d1a1a"], ["Wine", "#7a1f35"], ["Burgundy", "#5c1a2b"]],
     bride: "Anything white or cream: a dress, white jeans + a sweater, whatever feels cute.",
@@ -103,7 +103,7 @@ const LOOKS = [
   },
   {
     id: "wineries",
-    moment: "Saturday wineries",
+    moment: "Saturday Wineries",
     theme: "Warm neutrals",
     palette: [["Camel", "#b98a5a"], ["Cream", "#f3e8d6"], ["Olive", "#6b6a3a"], ["Rust", "#a4482a"], ["Brown", "#4a2e22"]],
     bride: "A cozy cream sweater dress + boots, or white jeans + a chunky sweater. Cute in photos, warm on the patio.",
@@ -118,7 +118,7 @@ const LOOKS = [
   },
   {
     id: "sat-dinner",
-    moment: "Saturday celebration dinner",
+    moment: "Saturday Celebration Dinner",
     theme: "All shades of wine",
     palette: [["Cranberry", "#9b2c45"], ["Wine", "#7a1f35"], ["Burgundy", "#5c1a2b"], ["Merlot", "#4a1424"]],
     bride: "A cute white dress, a step up from the rest of the weekend.",
