@@ -10,6 +10,7 @@
 //   photo     – optional: image file for this track (defaults to kathy.png)
 //   song      – optional: the stop's theme song, shown like the "now playing" track
 //   artist    – optional: who sings it
+//   spotify   – optional: Spotify track ID (the part after open.spotify.com/track/) so it plays on the card
 
 const TRIP = {
   theme: "Vino Before Vows",
@@ -17,7 +18,8 @@ const TRIP = {
   dates: "November 13-15, 2026",
   place: "Sonoma Valley",
   coverPhoto: "kathy.png",
-  secondsPerTrack: 6, // how long each stop shows when you hit play
+  secondsPerTrack: 8,  // how long each stop shows when you hit play (lofi or no sound)
+  secondsPerSong: 30,  // how long each stop shows when theme songs are playing
   // Paste a Spotify playlist link here to embed it, e.g. "https://open.spotify.com/playlist/..."
   playlist: "",
 };
@@ -27,31 +29,31 @@ const ITINERARY = [
     day: "Friday",
     date: "Nov 13",
     events: [
-      { time: "4:00 PM", title: "Check In", location: "Twin Oaks Villa", map: false, notes: "Decor goes up first, while there's still daylight for the photo wall. Shoes off at the door!", song: "Location", artist: "Khalid" },
-      { time: "Before dinner", title: "Welcome Toast", location: "The Kitchen Island", map: false, notes: "Coupes, wine charms, and the signature pour: The Blushing Bride.", song: "Kiss Me More", artist: "Doja Cat ft. SZA" },
-      { time: "6:30 PM", title: "Dinner at El Dorado Kitchen", location: "El Dorado Kitchen", notes: "Special but relaxed. Party of six.", look: "fri", song: "Best Part", artist: "Daniel Caesar ft. H.E.R." },
-      { time: "Evening", title: "Nightcap & Hot Tub", location: "Twin Oaks Villa", map: false, notes: "Robes on, voices down. Quiet hours start at 10:00 PM.", song: "Snooze", artist: "SZA" },
+      { time: "4:00 PM", title: "Check In", location: "Twin Oaks Villa", map: false, notes: "Decor goes up first, while there's still daylight for the photo wall. Shoes off at the door!", song: "Location", artist: "Khalid", spotify: "152lZdxL1OR0ZMW6KquMif" },
+      { time: "Before dinner", title: "Welcome Toast", location: "The Kitchen Island", map: false, notes: "Coupes, wine charms, and the signature pour: The Blushing Bride.", song: "Kiss Me More", artist: "Doja Cat ft. SZA", spotify: "748mdHapucXQri7IAO8yFK" },
+      { time: "6:30 PM", title: "Dinner at El Dorado Kitchen", location: "El Dorado Kitchen", notes: "Special but relaxed. Party of six.", look: "fri", song: "Best Part", artist: "Daniel Caesar ft. H.E.R.", spotify: "1RMJOxR6GRPsBHL8qeC2ux" },
+      { time: "Evening", title: "Nightcap & Hot Tub", location: "Twin Oaks Villa", map: false, notes: "Robes on, voices down. Quiet hours start at 10:00 PM.", song: "Snooze", artist: "SZA", spotify: "4iZ4pt7kvcaH6Yo8UoZ4s2" },
     ],
   },
   {
     day: "Saturday",
     date: "Nov 14",
     events: [
-      { time: "Morning", title: "Sleep In", location: "Twin Oaks Villa", map: false, notes: "Coffee, pastries, no alarms, no agenda.", song: "Aruarian Dance", artist: "Nujabes" },
-      { time: "Late morning", title: "DIY Spa Morning", location: "The Hot Tub", map: false, notes: "Robes, face masks, bath salts, and a long soak in the 7-person hot tub.", song: "Good Days", artist: "SZA" },
-      { time: "Midday", title: "Scribe Winery", location: "Scribe Winery", notes: "The tasting includes food, so this is lunch too. Settle in on the hacienda patio.", look: "wineries", song: "Juicy", artist: "Doja Cat" },
-      { time: "Afternoon", title: "Bubbles at Gloria Ferrer", location: "Gloria Ferrer", notes: "Taste of Carneros flight on the terrace. Group photos against the vines.", look: "wineries", song: "Leave the Door Open", artist: "Silk Sonic" },
-      { time: "Late afternoon", title: "Get Glam", location: "Twin Oaks Villa", map: false, notes: "Back to the house to change into something a little nicer, then rideshare into town.", look: "sat-dinner", song: "Water", artist: "Tyla" },
-      { time: "6:30 PM", title: "The Girl & the Fig", location: "The Girl & the Fig", notes: "The celebration dinner. Veil on for the entrance 👰‍♀️", look: "sat-dinner", song: "Single Ladies (Put a Ring on It)", artist: "Beyoncé" },
+      { time: "Morning", title: "Sleep In", location: "Twin Oaks Villa", map: false, notes: "Coffee, pastries, no alarms, no agenda.", song: "Aruarian Dance", artist: "Nujabes", spotify: "4sUTagdmyuyAxd7RvbygpQ" },
+      { time: "Late morning", title: "DIY Spa Morning", location: "The Hot Tub", map: false, notes: "Robes, face masks, bath salts, and a long soak in the 7-person hot tub.", song: "Good Days", artist: "SZA", spotify: "3YJJjQPAbDT7mGpX3WtQ9A" },
+      { time: "Midday", title: "Scribe Winery", location: "Scribe Winery", notes: "The tasting includes food, so this is lunch too. Settle in on the hacienda patio.", look: "wineries", song: "Juicy", artist: "Doja Cat", spotify: "20GMdpeWHUEtjAdpdy4YIt" },
+      { time: "Afternoon", title: "Bubbles at Gloria Ferrer", location: "Gloria Ferrer", notes: "Taste of Carneros flight on the terrace. Group photos against the vines.", look: "wineries", song: "Leave the Door Open", artist: "Silk Sonic", spotify: "7MAibcTli4IisCtbHKrGMh" },
+      { time: "Late afternoon", title: "Get Glam", location: "Twin Oaks Villa", map: false, notes: "Back to the house to change into something a little nicer, then rideshare into town.", look: "sat-dinner", song: "Water", artist: "Tyla", spotify: "5aIVCx5tnk0ntmdiinnYvw" },
+      { time: "6:30 PM", title: "The Girl & the Fig", location: "The Girl & the Fig", notes: "The celebration dinner. Veil on for the entrance 👰‍♀️", look: "sat-dinner", song: "Single Ladies (Put a Ring on It)", artist: "Beyoncé", spotify: "2ZBNclC5wm4GtiWaeh0DMx" },
     ],
   },
   {
     day: "Sunday",
     date: "Nov 15",
     events: [
-      { time: "10:00 AM", title: "Check Out", location: "Twin Oaks Villa", map: false, notes: "Bags packed before brunch. One last group photo before we go.", song: "Crazy in Love", artist: "Beyoncé ft. JAY-Z" },
-      { time: "10:15 AM", title: "Sunflower Caffé", location: "Sunflower Caffé", notes: "Quick brunch on the Plaza. No reservations, so two early birds go ahead to hold a table.", song: "Coffee", artist: "Miguel" },
-      { time: "11:00 AM", title: "Head Home", location: "Sonoma Valley", map: false, notes: "Hugs all around. Next stop: the wedding 💍", song: "Best Friend", artist: "Saweetie ft. Doja Cat" },
+      { time: "10:00 AM", title: "Check Out", location: "Twin Oaks Villa", map: false, notes: "Bags packed before brunch. One last group photo before we go.", song: "Crazy in Love", artist: "Beyoncé ft. JAY-Z", spotify: "5IVuqXILoxVWvWEPm82Jxr" },
+      { time: "10:15 AM", title: "Sunflower Caffé", location: "Sunflower Caffé", notes: "Quick brunch on the Plaza. No reservations, so two early birds go ahead to hold a table.", song: "Coffee", artist: "Miguel", spotify: "6vMpPxLV0F5Diwcs6awI1Z" },
+      { time: "11:00 AM", title: "Head Home", location: "Sonoma Valley", map: false, notes: "Hugs all around. Next stop: the wedding 💍", song: "Best Friend", artist: "Saweetie ft. Doja Cat", spotify: "2etHQJxIbV0soyPhelVs9Y" },
     ],
   },
 ];
