@@ -419,10 +419,16 @@
   // ---------- Sound: Spotify theme songs, with generated lofi as the fallback ----------
   let soundMode = "songs";
   try { soundMode = localStorage.getItem("kathy-sound") || "songs"; } catch {}
-  let sp = null, spUri = null, spLiveUri = null, spFailed = false, spCheck = 0, spRetry = 0;
+  let sp = null, spFailed = false;
+  let spLoaded = null;   // song currently loaded in the Spotify player
+  let spWant = null;     // song we've asked to play (null while paused) — each request is sent once
+  let spAwait = null;    // song we've loaded and are waiting on before pressing play
+  let spStarted = null;  // song that has actually played, so un-pausing resumes instead of restarting
+  let spLiveUri = null;  // song Spotify says is playing right now
+  let spT1 = 0, spCheck = 0;
   const hasSongs = tracks.some(x => x.spotify);
   const uriOf = tr => "spotify:track:" + tr.spotify;
-  const spLive = () => !!sp && spLiveUri === spUri;   // the song we want is actually playing
+  const spLive = () => !!sp && !!spWant && spLiveUri === spWant;
   const usingSpotify = () => soundMode === "songs" && sp && !spFailed && idx >= 0 && !!tracks[idx].spotify;
   const msg = m => { $("soundMsg").textContent = m || ""; };
 
@@ -430,15 +436,21 @@
     window.onSpotifyIframeApiReady = API => {
       const first = tracks.find(x => x.spotify);
       API.createController($("spotifyEmbed"), { uri: uriOf(first), width: "100%", height: 80 }, ctrl => {
-        sp = ctrl; spUri = uriOf(first);
+        sp = ctrl; spLoaded = uriOf(first);
         ctrl.addListener("playback_update", e => {
-          const d = e.data, wasLive = spLive();
-          spLiveUri = !d.isPaused && d.position > 0 ? (d.playingURI || spUri) : null;
+          const d = e.data, uri = d.playingURI || spLoaded, wasLive = spLive();
+          spLiveUri = d.isPaused ? null : uri;
+          if (spLiveUri) spStarted = spLiveUri;
+          // The new song has loaded: press play exactly once
+          if (spAwait && uri === spAwait) { spAwait = null; clearTimeout(spT1); if (spWant === uri) sp.play(); }
           if (spLive() && !wasLive) {
-            spFailed = false; clearTimeout(spCheck); clearInterval(spRetry); msg("");
-            // Tapping play inside the Spotify player starts the slideshow too
-            if (!playing && idx >= 0) { playing = true; last = performance.now(); requestAnimationFrame(tick); }
-            syncAudio(); updateUI();
+            spFailed = false; clearTimeout(spCheck); msg("");
+            syncAudio();
+          }
+          // Tapping play inside the Spotify player starts the slideshow too
+          if (spLiveUri && !playing && idx >= 0 && uri === uriOf(tracks[idx] || {})) {
+            playing = true; last = performance.now(); requestAnimationFrame(tick);
+            spWant = uri; syncAudio(); updateUI();
           }
         });
         syncAudio();
@@ -451,23 +463,23 @@
     document.head.appendChild(tag);
   }
 
-  // Ask Spotify to play, and keep asking until it confirms (a freshly loaded song ignores early requests)
-  function startSong() {
-    clearInterval(spRetry);
-    let tries = 0;
-    sp.play();
-    spRetry = setInterval(() => {
-      if (spLive() || !playing || soundMode !== "songs" || ++tries > 10) return clearInterval(spRetry);
-      sp.play();
-    }, 600);
-    clearTimeout(spCheck);
+  function startSong(uri) {
+    spWant = uri;
+    clearTimeout(spT1); clearTimeout(spCheck);
+    if (uri !== spLoaded) {
+      spLoaded = uri; spAwait = uri; spLiveUri = null;
+      sp.loadUri(uri);
+      // If Spotify never reports the load, press play once anyway
+      spT1 = setTimeout(() => { if (spAwait === uri) { spAwait = null; if (spWant === uri) sp.play(); } }, 1500);
+    } else if (spStarted === uri) sp.resume();
+    else sp.play();
     // Some phones block Spotify from starting on its own; play lofi for this stop if it never starts
     spCheck = setTimeout(() => {
-      if (playing && soundMode === "songs" && !spLive()) {
+      if (spWant === uri && !spLive()) {
         spFailed = true; syncAudio();
         msg("Tap ▶ in the Spotify player to hear the theme songs. Lofi until then ☕");
       }
-    }, 7000);
+    }, 8000);
   }
 
   let lastIdx = null;
@@ -479,12 +491,11 @@
     wantLofi ? lofi.play() : lofi.pause();
     if (sp) {
       if (wantSongs) {
-        const uri = uriOf(tr);
-        if (uri !== spUri) { spUri = uri; spLiveUri = null; sp.loadUri(uri); setTimeout(startSong, 250); }
-        else if (!spLive()) startSong();
-      } else {
-        clearTimeout(spCheck); clearInterval(spRetry);
-        if (spLiveUri) sp.pause();
+        if (spWant !== uriOf(tr)) startSong(uriOf(tr));
+      } else if (spWant || spLiveUri) {
+        spWant = null; spAwait = null;
+        clearTimeout(spT1); clearTimeout(spCheck);
+        sp.pause();
       }
     }
     $("spotifyWrap").classList.toggle("show", soundMode === "songs" && !!sp && idx >= 0);
