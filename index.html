@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kathy’s Bachelorette</title>
+<meta name="description" content="Kathy’s Bachelorette · Sonoma Valley · November 13–15, 2026">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍷</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=Libre+Caslon+Text&family=Overpass:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --wine: #92233f;
+    --wine-soft: #b8566f;
+    --blush: #fcf1f3;
+    --blush-2: #f6e1e6;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--wine);
+    color: var(--wine);
+    font-family: "Overpass", system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 64px;
+    gap: 28px;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--wine); outline-offset: 3px; border-radius: 999px; }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--blush);
+    border-radius: 22px;
+    padding: 36px 36px 30px;
+    box-shadow: 0 20px 60px rgba(40, 0, 10, .35);
+  }
+
+  /* Arch photo */
+  .arch {
+    position: relative;
+    width: 72%;
+    margin: 0 auto 26px;
+    aspect-ratio: 365 / 400;
+    border-radius: 999px 999px 0 0;
+    overflow: hidden;
+    border: 1.5px solid var(--wine);
+    background: var(--blush-2);
+  }
+  .arch img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: opacity .5s ease;
+  }
+  .arch.spin img { animation: breathe 6s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.04); } }
+
+  /* Title block */
+  .meta { min-height: 226px; }
+  .eyebrow {
+    font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--wine-soft); margin: 0 0 6px; height: 18px;
+  }
+  h1 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-style: italic; font-weight: 900;
+    font-size: clamp(38px, 10vw, 54px);
+    line-height: 1.02;
+    margin: 0 0 10px;
+    letter-spacing: -.01em;
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .date {
+    font-family: "Libre Caslon Text", "Times New Roman", serif;
+    font-size: clamp(21px, 5.6vw, 30px);
+    margin: 0;
+  }
+  .place { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; margin: 10px 0 0; }
+  .notes { font-size: 15px; line-height: 1.45; margin: 8px 0 0; color: #6d2236; }
+  .song { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 15px; color: var(--wine); text-decoration: none; }
+  .song:empty { display: none; }
+  .song b { font-weight: 600; }
+  .song:hover b { text-decoration: underline; text-underline-offset: 3px; }
+  .song .vinyl { width: 22px; height: 22px; flex: none; }
+  .playing .song .vinyl { animation: spin 3s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .notes a { color: var(--wine); font-weight: 600; text-underline-offset: 3px; white-space: nowrap; }
+  .fade { animation: fadeUp .45s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } }
+
+  .heart { flex: none; width: 46px; height: 46px; display: grid; place-items: center; }
+  .heart svg { width: 40px; height: 40px; transition: transform .2s; }
+  .heart path { fill: transparent; stroke: var(--wine); stroke-width: 1.6; transition: fill .2s; }
+  .heart[aria-pressed="true"] path { fill: var(--wine); }
+  .heart.pop svg { animation: pop .35s ease; }
+  @keyframes pop { 50% { transform: scale(1.3); } }
+
+  /* Progress */
+  .bar {
+    position: relative; height: 22px; margin: 18px 0 6px; cursor: pointer; touch-action: none;
+  }
+  .bar::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px;
+    background: var(--wine); opacity: .35; transform: translateY(-50%);
+  }
+  .bar .fill {
+    position: absolute; left: 0; top: 50%; height: 2px; width: 0;
+    background: var(--wine); transform: translateY(-50%);
+  }
+  .bar .knob {
+    position: absolute; top: 50%; left: 0; width: 15px; height: 15px; border-radius: 50%;
+    background: var(--wine); transform: translate(-50%, -50%);
+  }
+  .labels { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 8px; }
+
+  /* Controls */
+  .controls { display: flex; align-items: flex-end; justify-content: center; gap: clamp(10px, 4vw, 26px); }
+  .ctrl { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 22px; border-radius: 50%; transition: transform .15s, background .15s; }
+  .ctrl:hover { background: var(--blush-2); }
+  .ctrl:active { transform: scale(.9); }
+  .ctrl svg { width: 46px; height: 46px; }
+  .ctrl.sm svg { width: 36px; height: 36px; }
+  .play-wrap { position: relative; width: 116px; display: flex; flex-direction: column; align-items: center; }
+  .curve { width: 140px; height: 44px; margin-bottom: -6px; overflow: visible; }
+  .curve text { font-family: "Overpass", sans-serif; font-size: 17px; fill: var(--wine); letter-spacing: .02em; }
+  .play {
+    width: 96px; height: 96px; border-radius: 50%; background: var(--wine);
+    display: grid; place-items: center; transition: transform .15s;
+    box-shadow: 0 6px 18px rgba(146, 35, 63, .35);
+  }
+  .play:hover { transform: scale(1.04); }
+  .play:active { transform: scale(.94); }
+  .play svg { width: 44px; height: 44px; fill: var(--blush); }
+
+  /* Tracklist */
+  .queue { padding: 28px 28px 18px; }
+  .queue h2 {
+    font-family: "Playfair Display", Georgia, serif; font-style: italic; font-weight: 900;
+    font-size: 30px; margin: 0 0 4px;
+  }
+  .day-h { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--wine-soft); margin: 22px 0 6px; }
+  .track {
+    width: 100%; text-align: left; display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 12px;
+    padding: 11px 10px; border-radius: 12px; transition: background .15s;
+  }
+  .track:hover { background: var(--blush-2); }
+  .track.on { background: var(--wine); color: var(--blush); }
+  .track .n { font-size: 14px; opacity: .7; text-align: center; }
+  .track .t { font-weight: 600; font-size: 16px; line-height: 1.25; }
+  .track .s { font-size: 13px; opacity: .75; margin-top: 2px; }
+  .track .r { font-size: 13px; opacity: .8; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+  .track .fav { width: 14px; height: 14px; fill: currentColor; }
+  .eq { display: none; gap: 2px; align-items: flex-end; height: 14px; justify-self: center; }
+  .track.on .eq { display: flex; }
+  .track.on .n { display: none; }
+  .eq i { width: 3px; background: currentColor; height: 4px; }
+  .playing .track.on .eq i { animation: eq .9s ease-in-out infinite; }
+  .eq i:nth-child(2) { animation-delay: -.3s !important; }
+  .eq i:nth-child(3) { animation-delay: -.6s !important; }
+  @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
+
+  .sound p.sub { margin: 0 0 14px; font-size: 15px; color: #6d2236; }
+  .sound iframe { width: 100%; height: 380px; border: 0; border-radius: 12px; display: block; }
+  .sound .open { display: inline-block; margin-top: 14px; padding: 10px 18px; border-radius: 999px; background: var(--wine); color: var(--blush); text-decoration: none; font-weight: 600; font-size: 15px; }
+  .sound .lofi { margin: 18px 0 0; font-size: 14px; color: var(--wine-soft); }
+
+  .swatches { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 6px 0 16px; }
+  .sw { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; min-width: 0; }
+  .sw i { display: block; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(146,35,63,.25); }
+  .sw i { width: min(34px, 100%); aspect-ratio: 1; }
+  .rule { background: var(--wine); color: var(--blush); border-radius: 12px; padding: 12px 14px; font-size: 15px; line-height: 1.4; margin: 0 0 6px; }
+  .look { border-top: 1px solid rgba(146,35,63,.2); padding: 16px 0 14px; scroll-margin-top: 20px; border-radius: 4px; transition: background .4s; }
+  .look.flash { background: var(--blush-2); }
+  .look h3 { font-family: "Libre Caslon Text", serif; font-weight: 400; font-size: 20px; margin: 0 0 10px; }
+  .who { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .who b { display: block; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--wine-soft); margin-bottom: 4px; }
+  .who p { margin: 6px 0 0; font-size: 14.5px; line-height: 1.45; color: #6d2236; }
+  .figs { display: flex; align-items: flex-end; gap: 2px; margin: 8px 0 2px; }
+  .figs svg { display: block; height: 210px; width: auto; }
+  .figs.girls svg { height: 175px; }
+  .who > div:first-child .figs { background: var(--blush-2); border-radius: 12px; justify-content: center; padding: 8px 0 4px; }
+  .who > div:last-child .figs { background: var(--blush-2); border-radius: 12px; justify-content: center; padding: 8px 0 4px; }
+  .theme { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: -4px 0 12px; font-size: 14px; color: #6d2236; }
+  .theme b { color: var(--wine); }
+  .chips { display: flex; gap: 4px; }
+  .chips i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(146,35,63,.25); }
+  .tip { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--blush-2); font-size: 14px; line-height: 1.45; color: #6d2236; }
+  .tips { margin: 14px 0 0; padding-left: 18px; font-size: 14.5px; line-height: 1.5; color: #6d2236; }
+  .tips li + li { margin-top: 6px; }
+  .kv { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .kv td { padding: 9px 0; border-top: 1px solid rgba(146,35,63,.15); vertical-align: top; }
+  .kv td:first-child { font-weight: 600; padding-right: 14px; white-space: nowrap; }
+  .sub-h { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--wine-soft); margin: 22px 0 6px; }
+  @media (max-width: 440px) { .who { grid-template-columns: 1fr; } }
+
+  footer { color: var(--blush); opacity: .7; font-size: 13px; text-align: center; }
+
+  @media (max-width: 440px) {
+    body { padding-top: 16px; }
+    .card { padding: 26px 20px 22px; }
+    .queue { padding: 22px 14px 12px; }
+    .ctrl { width: 40px; height: 40px; }
+    .ctrl svg { width: 40px; height: 40px; }
+    .ctrl.sm svg { width: 32px; height: 32px; }
+    .play { width: 84px; height: 84px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<main class="card player" aria-label="Itinerary player">
+  <div class="arch" id="arch"><img id="photo" alt="Kathy smiling with a glass of white wine"></div>
+
+  <div class="meta" aria-live="polite">
+    <div id="text">
+      <p class="eyebrow" id="eyebrow"></p>
+      <h1 id="title"></h1>
+      <div class="row">
+        <p class="date" id="date"></p>
+        <button class="heart" id="heart" aria-pressed="false" aria-label="Love this">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.6C1.6 7.6 3.7 4.5 7 4.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.3 0 5.4 3.1 4.3 6.4-1.8 5-9.3 9.6-9.3 9.6z"/></svg>
+        </button>
+      </div>
+      <p class="place" id="place"></p>
+      <a class="song" id="song" target="_blank" rel="noopener"></a>
+      <p class="notes" id="notes"></p>
+    </div>
+  </div>
+
+  <div class="bar" id="bar" role="slider" aria-label="Weekend progress" tabindex="0">
+    <div class="fill" id="fill"></div>
+    <div class="knob" id="knob"></div>
+  </div>
+  <div class="labels"><span id="lblL">Friday</span><span id="lblR">to Sunday</span></div>
+
+  <div class="controls">
+    <button class="ctrl" id="prevDay" aria-label="Previous day" title="Previous day">
+      <svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="24" cy="24" r="21"/><path d="M23 18.5l-7 5.5 7 5.5zM32 18.5l-7 5.5 7 5.5z"/></svg>
+    </button>
+    <button class="ctrl sm" id="prev" aria-label="Previous stop" title="Previous stop">
+      <svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 13.5A13 13 0 1 1 7 21"/><path d="M8 8.5v6h6"/><text x="20" y="25" text-anchor="middle" font-size="11" fill="currentColor" stroke="none" font-family="Overpass, sans-serif">10</text></svg>
+    </button>
+    <div class="play-wrap">
+      <svg class="curve" viewBox="0 0 140 44" aria-hidden="true">
+        <path id="arc" d="M12 46 A 62 62 0 0 1 128 46" fill="none"/>
+        <text><textPath href="#arc" startOffset="50%" text-anchor="middle" id="curveText">let's hit play</textPath></text>
+      </svg>
+      <button class="play" id="play" aria-label="Play">
+        <svg viewBox="0 0 24 24" id="playIcon" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>
+      </button>
+    </div>
+    <button class="ctrl sm" id="next" aria-label="Next stop" title="Next stop">
+      <svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M30 13.5A13 13 0 1 0 33 21"/><path d="M32 8.5v6h-6"/><text x="20" y="25" text-anchor="middle" font-size="11" fill="currentColor" stroke="none" font-family="Overpass, sans-serif">10</text></svg>
+    </button>
+    <button class="ctrl" id="nextDay" aria-label="Next day" title="Next day">
+      <svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="24" cy="24" r="21"/><path d="M16 18.5l7 5.5-7 5.5zM25 18.5l7 5.5-7 5.5z"/></svg>
+    </button>
+  </div>
+</main>
+
+<section class="card queue player-list" aria-label="Full itinerary">
+  <h2>The Tracklist</h2>
+  <div id="list"></div>
+</section>
+
+<section class="card queue" id="wear" aria-label="What to wear">
+  <h2>What to Wear</h2>
+  <div id="wearBody"></div>
+</section>
+
+<section class="card queue sound" aria-label="Weekend soundtrack">
+  <h2>The Soundtrack</h2>
+  <div id="sound"></div>
+</section>
+
+<section class="card queue" id="house" aria-label="The house">
+  <h2>The House</h2>
+  <div id="houseBody"></div>
+</section>
+
+<footer>made with love for Kathy 🍷</footer>
+
+<script src="itinerary.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const tracks = ITINERARY.flatMap(d => d.events.map(e => ({ ...e, day: d.day, dayDate: d.date })));
+  const N = tracks.length;
+  const DUR = (TRIP.secondsPerTrack || 6) * 1000;
+  const PLAY = '<path d="M7 4.5v15l12.5-7.5z"/>';
+  const PAUSE = '<path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z"/>';
+
+  let idx = -1;        // -1 = cover
+  let playing = false;
+  let t = 0;           // ms into current track
+  let last = 0;
+  let ended = false;
+
+  // Favorites (per viewer, best-effort)
+  let favs = {};
+  try { favs = JSON.parse(localStorage.getItem("kathy-favs") || "{}"); } catch {}
+  const saveFavs = () => { try { localStorage.setItem("kathy-favs", JSON.stringify(favs)); } catch {} };
+  const key = i => i < 0 ? "cover" : `${tracks[i].day}-${tracks[i].time}-${tracks[i].title}`;
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const VINYL = '<svg class="vinyl" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><circle cx="12" cy="12" r="7.5" fill="none" stroke="#fcf1f3" stroke-opacity=".35" stroke-width=".8"/><circle cx="12" cy="12" r="4" fill="#fcf1f3"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>';
+  const songUrl = e => "https://open.spotify.com/search/" + encodeURIComponent(e.song + " " + (e.artist || ""));
+  const mapUrl = q => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+
+  function render(animate = true) {
+    const cover = idx < 0;
+    const tr = tracks[idx];
+    $("eyebrow").textContent = cover ? (TRIP.theme || "") : `${tr.day} · Stop ${idx + 1} of ${N}`;
+    $("title").textContent = cover ? TRIP.title : tr.title;
+    $("date").textContent = cover ? TRIP.dates : /\d/.test(tr.time) ? `${tr.day}, ${tr.time}` : `${tr.day} ${tr.time.toLowerCase()}`;
+    $("place").textContent = cover ? TRIP.place : tr.location;
+    const where = !cover && tr.map !== false && (tr.map || (/TBD/i.test(tr.location) ? "" : tr.location));
+    const look = !cover && tr.look && LOOKS.find(l => l.id === tr.look);
+    $("notes").innerHTML = cover ? "" :
+      (tr.notes ? esc(tr.notes) : "") +
+      (look ? ` <a href="#look-${look.id}" data-look="${look.id}">What to wear →</a>` : "") +
+      (where ? ` <a href="${mapUrl(where + " " + TRIP.place)}" target="_blank" rel="noopener">Directions →</a>` : "");
+
+    const sg = $("song");
+    if (!cover && tr.song) {
+      sg.innerHTML = `${VINYL}<span><b>${esc(tr.song)}</b>${tr.artist ? "&nbsp;·&nbsp;" + esc(tr.artist) : ""}</span>`;
+      sg.href = songUrl(tr);
+      sg.setAttribute("aria-label", `Theme song: ${tr.song}${tr.artist ? " by " + tr.artist : ""} (opens Spotify)`);
+    } else { sg.innerHTML = ""; sg.removeAttribute("href"); }
+
+    const src = (!cover && tr.photo) || TRIP.coverPhoto;
+    if (!$("photo").src.endsWith(src)) $("photo").src = src;
+
+    $("heart").setAttribute("aria-pressed", !!favs[key(idx)]);
+    if (animate) { const el = $("text"); el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade"); }
+
+    $("lblL").textContent = cover ? "Friday" : tr.time;
+    $("lblR").textContent = cover ? "to Sunday" : (idx + 1 < N ? `next: ${tracks[idx + 1].title}` : "the end 💍");
+
+    document.querySelectorAll(".track").forEach((b, i) => b.classList.toggle("on", i === idx));
+    const on = document.querySelector(".track.on");
+    if (on && animate && playing) on.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    updateUI();
+  }
+
+  function updateUI() {
+    $("playIcon").innerHTML = playing ? PAUSE : PLAY;
+    $("play").setAttribute("aria-label", playing ? "Pause" : "Play");
+    $("curveText").textContent = playing ? "now playing" : ended ? "play it again?" : idx < 0 ? "let's hit play" : "paused";
+    $("arch").classList.toggle("spin", playing);
+    document.body.classList.toggle("playing", playing);
+    // Progress across the whole weekend; on the cover sit just past the start like the mockup
+    const p = idx < 0 ? 0.25 / N : Math.min(1, (idx + Math.min(t, DUR) / DUR) / N);
+    $("fill").style.width = p * 100 + "%";
+    $("knob").style.left = p * 100 + "%";
+    $("bar").setAttribute("aria-valuetext", idx < 0 ? "Start" : `${tracks[idx].day} ${tracks[idx].time}`);
+  }
+
+  function go(i) {
+    idx = Math.max(-1, Math.min(N - 1, i));
+    t = 0; ended = false;
+    render();
+  }
+
+  function setPlaying(on) {
+    playing = on;
+    if (on) {
+      if (idx < 0 || ended) go(0);
+      last = performance.now();
+      requestAnimationFrame(tick);
+    }
+    updateUI();
+  }
+
+  function tick(now) {
+    if (!playing) return;
+    t += now - last; last = now;
+    if (t >= DUR) {
+      if (idx < N - 1) go(idx + 1);
+      else { t = DUR; playing = false; ended = true; updateUI(); return; }
+    }
+    updateUI();
+    requestAnimationFrame(tick);
+  }
+
+  const dayStart = d => tracks.findIndex(x => x.day === d);
+  const days = ITINERARY.map(d => d.day);
+
+  $("play").onclick = () => setPlaying(!playing);
+  $("next").onclick = () => go(idx + 1);
+  $("prev").onclick = () => go(idx - 1);
+  $("nextDay").onclick = () => {
+    if (idx < 0) return go(0);
+    const di = days.indexOf(tracks[idx].day);
+    go(di < days.length - 1 ? dayStart(days[di + 1]) : N - 1);
+  };
+  $("prevDay").onclick = () => {
+    if (idx < 0) return;
+    const di = days.indexOf(tracks[idx].day);
+    const start = dayStart(days[di]);
+    // Like a music player: first tap goes to start of today, next tap goes back a day
+    go(idx > start ? start : di > 0 ? dayStart(days[di - 1]) : -1);
+  };
+
+  $("heart").onclick = () => {
+    const k = key(idx);
+    favs[k] = !favs[k]; if (!favs[k]) delete favs[k];
+    saveFavs();
+    const h = $("heart");
+    h.setAttribute("aria-pressed", !!favs[k]);
+    h.classList.remove("pop"); void h.offsetWidth; h.classList.add("pop");
+    buildList();
+  };
+
+  // Scrub by tapping/dragging the bar
+  const bar = $("bar");
+  const scrub = e => {
+    const r = bar.getBoundingClientRect();
+    const x = Math.max(0, Math.min(0.9999, (e.clientX - r.left) / r.width));
+    const i = Math.floor(x * N);
+    if (i !== idx) go(i);
+  };
+  bar.addEventListener("pointerdown", e => { bar.setPointerCapture(e.pointerId); scrub(e); });
+  bar.addEventListener("pointermove", e => { if (bar.hasPointerCapture(e.pointerId)) scrub(e); });
+  bar.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { go(idx + 1); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { go(idx - 1); e.preventDefault(); }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.target.closest("button, a, [role=slider]")) return;
+    if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); }
+    if (e.key === "ArrowRight") go(idx + 1);
+    if (e.key === "ArrowLeft") go(idx - 1);
+  });
+
+  function buildList() {
+    const heart = '<svg class="fav" viewBox="0 0 24 24" aria-label="loved"><path d="M12 20.5s-7.5-4.6-9.3-9.6C1.6 7.6 3.7 4.5 7 4.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.3 0 5.4 3.1 4.3 6.4-1.8 5-9.3 9.6-9.3 9.6z"/></svg>';
+    let html = "", n = 0;
+    for (const d of ITINERARY) {
+      html += `<p class="day-h">${esc(d.day)} · ${esc(d.date)}</p>`;
+      for (const e of d.events) {
+        const i = n++;
+        html += `<button class="track${i === idx ? " on" : ""}" data-i="${i}">
+          <span class="n">${i + 1}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span><div class="t">${esc(e.title)}</div><div class="s">${esc(e.location)}${e.song ? " · ♪ " + esc(e.song) : ""}</div></span>
+          <span class="r">${favs[key(i)] ? heart : ""}${esc(e.time)}</span>
+        </button>`;
+      }
+    }
+    $("list").innerHTML = html;
+    $("list").querySelectorAll(".track").forEach(b => b.onclick = () => {
+      go(+b.dataset.i);
+      document.querySelector(".player").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  // Faceless fashion-illustration figure, built from the outfit options in itinerary.js
+  function figure(o, hair) {
+    const SKIN = "#e8c3a6", OUT = "rgba(110,25,45,.45)";
+    const sym = g => g + `<g transform="matrix(-1 0 0 1 120 0)">${g}</g>`;
+    const P = (d, fill, w = .8) => `<path d="${d}" fill="${fill}" stroke="${OUT}" stroke-width="${w}" stroke-linejoin="round"/>`;
+    const L = (pts, c, w) => `<polyline points="${pts}" fill="none" stroke="${OUT}" stroke-width="${w + 1.4}" stroke-linecap="round" stroke-linejoin="round"/>` +
+                             `<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const c = o.color, sh = o.shoes || {}, sleeveless = o.sleeves === "none";
+    const hem = { mini: 152, midi: 196, maxi: 236 }[o.bottom];
+    const arm = "43,61 36,100 37,136";
+    let s = "";
+
+    if (o.veil) s += P("M49 15 Q60 5 71 15 L93 178 Q60 186 27 178 Z", "rgba(255,255,255,.6)", .6);
+    s += `<path d="M46 24 Q46 8 60 9 Q74 8 74 24 L78 84 Q60 92 42 84 Z" fill="${hair}"/>`;
+    s += sym(L("54,132 53,188 53,236", SKIN, 9));
+    if (o.bottom === "pants") s += P("M45 104 L75 104 L77 134 L43 134 Z", o.pantsColor) + sym(L("54,130 53,188 53,234", o.pantsColor, 12));
+    if (sh.type === "knee") s += sym(L("53,184 53,236", sh.color, 11));
+    if (sh.type === "ankle") s += sym(L("53,224 53,236", sh.color, 11));
+    s += sym(sh.type === "heels" ? P("M49 234 L57 234 L59 242 L52 241 L50 245 L49 245 Z", sh.color, .6)
+           : sh.type === "slippers" ? P("M46 236 Q53 231 60 236 L60 243 L46 243 Z", sh.color, .6)
+           : P("M47.5 235 L58.5 235 L60 243 L46 243 Z", sh.color, .6));
+    if (hem) {
+      s += P(`M45 104 L75 104 L${hem > 200 ? 87 : hem > 160 ? 83 : 79} ${hem} Q60 ${hem + 5} ${hem > 200 ? 33 : hem > 160 ? 37 : 41} ${hem} Z`, c);
+      if (o.knit) for (let x = 49; x <= 71; x += 4.4) s += `<line x1="${x}" y1="108" x2="${60 + (x - 60) * 1.35}" y2="${hem - 4}" stroke="#000" stroke-opacity=".08" stroke-width=".8"/>`;
+      if (o.satin) s += `<path d="M65 110 Q71 150 76 ${hem - 6}" stroke="#fff" stroke-opacity=".35" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    }
+    s += `<rect x="55.5" y="36" width="9" height="22" rx="3" fill="${SKIN}"/>`;
+    if (sleeveless) {
+      s += P("M42 58 Q60 52 78 58 L76 74 L44 74 Z", SKIN, .5);
+      s += sym(L(arm, SKIN, 7.5));
+      s += P("M45 70 L55 73 L60 83 L65 73 L75 70 L75 106 L45 106 Z", c);
+      s += sym(`<line x1="47" y1="71" x2="48.5" y2="58" stroke="${c === "#fbf8f2" ? OUT : c}" stroke-width="1.2"/>`);
+      if (o.satin) s += `<path d="M66 78 Q69 92 70 104" stroke="#fff" stroke-opacity=".35" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+    } else {
+      const bottomY = o.pj ? 122 : 106;
+      s += P(`M41 58 Q60 52 79 58 L${o.pj ? 77 : 75} ${bottomY} L${o.pj ? 43 : 45} ${bottomY} Z`, c);
+      s += `<path d="M54 56 Q60 61 66 56" fill="none" stroke="${OUT}" stroke-width=".8"/>`;
+      if (o.knit) for (let x = 48; x <= 72; x += 4) s += `<line x1="${x}" y1="63" x2="${x}" y2="${bottomY - 3}" stroke="#000" stroke-opacity=".08" stroke-width=".8"/>`;
+      if (o.pj) {
+        s += sym(P("M54 56 L60 70 L52 66 Z", c, .9));
+        for (let y = 74; y <= 114; y += 10) s += `<circle cx="60" cy="${y}" r="1.1" fill="#92233f" fill-opacity=".6"/>`;
+        s += `<line x1="60" y1="70" x2="60" y2="122" stroke="${OUT}" stroke-width=".6"/>`;
+      }
+      s += sym(L(arm, c, 9.5));
+    }
+    s += sym(`<path d="M48 24 Q44 50 45 78 L50.5 76 Q50 50 52 28 Z" fill="${hair}"/>`);
+    if (o.layer) {
+      const len = o.layer.long ? 196 : 150, x2 = o.layer.long ? 34 : 38;
+      s += sym(P(`M40.5 58 L53 62 L55.5 104 L54 ${len} L${x2} ${len} Z`, o.layer.color) +
+               `<path d="M53 62 L49 80 L55 84" fill="none" stroke="${OUT}" stroke-width=".7"/>`);
+      s += sym(L(arm, o.layer.color, 11));
+    }
+    s += sym(`<circle cx="37" cy="141" r="4.3" fill="${SKIN}" stroke="${OUT}" stroke-width=".5"/>`);
+    if (o.bag) s += `<path d="M46 59 L72 110" stroke="${o.bag}" stroke-width="1.3" fill="none"/>` +
+      `<rect x="67" y="108" width="12" height="9" rx="2.5" fill="${o.bag}" stroke="${OUT}" stroke-width=".6"/>` +
+      `<line x1="67.5" y1="111.5" x2="78.5" y2="111.5" stroke="#000" stroke-opacity=".2" stroke-width=".6"/>`;
+    if (o.stole) {
+      s += P("M36 60 Q60 47 84 60 Q89 73 78 81 Q60 91 42 81 Q31 73 36 60 Z", o.stole);
+      for (let i = 0; i < 9; i++) s += `<path d="M${40 + i * 5} ${76 + (i % 2) * 3} q1.5 3 3 0" fill="none" stroke="${OUT}" stroke-width=".5"/>`;
+    }
+    if (o.sash) s += `<path d="M43 60 L50 57 L78 104 L72 108 Z" fill="#f4c9d2" stroke="${OUT}" stroke-width=".6"/>` +
+      `<text transform="translate(60.5 82.5) rotate(59)" font-size="5.5" text-anchor="middle" dominant-baseline="middle" fill="#92233f" font-family="Overpass, sans-serif" font-weight="600" letter-spacing=".6">BRIDE</text>`;
+    if (o.pearls) for (let t = 0; t <= 10; t++) s += `<circle cx="${52 + t * 1.6}" cy="${57 + 6 * Math.sin(Math.PI * t / 10)}" r="1.1" fill="#fff" stroke="${OUT}" stroke-width=".3"/>`;
+    if (o.gold) s += `<path d="M54 57 Q60 65 66 57" fill="none" stroke="#c9a14a" stroke-width=".9"/><circle cx="60" cy="62.5" r="1.3" fill="#c9a14a"/>`;
+    s += `<ellipse cx="60" cy="27" rx="11" ry="13" fill="${SKIN}" stroke="${OUT}" stroke-width=".5"/>`;
+    s += `<path d="M48.5 28 Q48 12 60 12.5 Q72 12 71.5 28 Q69 18 60 18.5 Q52 18 48.5 28 Z" fill="${hair}"/>`;
+    if (o.gold) s += sym(`<circle cx="49.3" cy="31" r="1.1" fill="#c9a14a"/>`);
+    if (o.veil) s += `<path d="M51 13 Q60 7 69 13" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>`;
+    return `<svg viewBox="16 0 88 250" role="img" aria-label="Outfit illustration">${s}</svg>`;
+  }
+
+  function buildExtras() {
+    const HAIR = ["#2a1a14", "#1e1410", "#3b2418", "#24170f"];
+    const figs = (looks, cls) => `<div class="figs ${cls}">${looks.map((o, i) => figure(o, HAIR[(i + (cls === "bride" ? 0 : 1)) % HAIR.length])).join("")}</div>`;
+    if (typeof STYLE !== "undefined" && typeof LOOKS !== "undefined") {
+      $("wearBody").innerHTML =
+        `<div class="swatches">${STYLE.palette.map(p => `<span class="sw"><i style="background:${esc(p.color)}"></i>${esc(p.name)}</span>`).join("")}</div>
+         ${STYLE.intro ? `<p class="notes" style="margin:0 0 12px">${esc(STYLE.intro)}</p>` : ""}
+         <p class="rule">${esc(STYLE.rule)}</p>` +
+        LOOKS.map(l => `<div class="look" id="look-${esc(l.id)}">
+          <h3>${esc(l.moment)}</h3>
+          ${l.palette ? `<div class="theme"><span>Girls' colors${l.theme ? ": <b>" + esc(l.theme) + "</b>" : ""}</span><span class="chips">${l.palette.map(([n, c]) => `<i style="background:${esc(c)}" title="${esc(n)}"></i>`).join("")}</span></div>` : ""}
+          <div class="who">
+            <div><b>The bride</b>${l.brideLook ? figs([l.brideLook], "bride") : ""}<p>${esc(l.bride)}</p></div>
+            <div><b>The girls</b>${l.girlsLooks ? figs(l.girlsLooks, "girls") : ""}<p>${esc(l.girls)}</p></div>
+          </div>${l.tip ? `<p class="tip">💡 ${esc(l.tip)}</p>` : ""}</div>`).join("") +
+        `<ul class="tips">${STYLE.tips.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+    } else $("wear").remove();
+
+    const table = rows => `<table class="kv">${rows.map(r =>
+      `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+
+    if (typeof HOUSE !== "undefined" && HOUSE) {
+      $("houseBody").innerHTML = `<p class="sub-h" style="margin-top:4px">${esc(HOUSE.name)}</p>${table(HOUSE.facts)}
+        <p class="sub-h">Who sleeps where</p>${table(HOUSE.rooms)}`;
+    } else $("house").remove();
+
+
+    // "What to wear" links on the player card: scroll + highlight that look
+    $("notes").addEventListener("click", e => {
+      const a = e.target.closest("a[data-look]");
+      if (!a) return;
+      e.preventDefault();
+      const el = $("look-" + a.dataset.look);
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600);
+    });
+  }
+
+  function buildSound() {
+    const m = (TRIP.playlist || "").match(/open\.spotify\.com\/(?:embed\/)?(playlist|album)\/([A-Za-z0-9]+)/);
+    let html = "";
+    if (m) {
+      html += `<p class="sub">Our weekend playlist. Add your songs before the trip!</p>
+        <iframe src="https://open.spotify.com/embed/${m[1]}/${m[2]}?theme=0" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="Weekend playlist on Spotify"></iframe>
+        <a class="open" href="https://open.spotify.com/${m[1]}/${m[2]}" target="_blank" rel="noopener">Open in Spotify</a>`;
+    } else {
+      html += `<p class="sub">Every stop has a theme song. Tap one to play it on Spotify.</p>`;
+    }
+    const withSongs = tracks.map((e, i) => [e, i]).filter(([e]) => e.song);
+    if (!m && withSongs.length) {
+      html += withSongs.map(([e, i]) => `<a class="track" href="${songUrl(e)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">
+          <span class="n">${i + 1}</span>
+          <span><div class="t">${esc(e.song)}</div><div class="s">${esc(e.artist || "")}</div></span>
+          <span class="r">${esc(e.title)}</span>
+        </a>`).join("");
+    }
+    html += `<p class="lofi"><a href="https://open.spotify.com/search/lofi%20beats" target="_blank" rel="noopener" style="color:inherit;text-underline-offset:3px">Lofi for the drive and the slow mornings ☕</a></p>`;
+    $("sound").innerHTML = html;
+  }
+
+  buildList();
+  buildSound();
+  buildExtras();
+  render(false);
+})();
+</script>
+</body>
+</html>
